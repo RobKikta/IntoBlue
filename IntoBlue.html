@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>MA5200</title>
+    	<script src="http://cdn.jsdelivr.net/sparkjs/0.5.10/spark.min.js"></script>
+		<script type="text/javascript">
+            // Particle Photon parameters
+            var particleConfig = {
+                "platformURL": "https://api.particle.io/v1/devices/",
+                "deviceID": "33230343310042323000d473", // TODO: Fill in your Device ID!!!
+                "accessToken": "fa9345c21fb2c40a2df537324fc217aeef97d358"  // TODO: Fill in your Access Token!!!
+            }
+
+            var eventSource = new EventSource(particleConfig.platformURL + 
+                                              particleConfig.deviceID + 
+                                              "/events/?access_token=" + particleConfig.accessToken);
+
+
+	        // equipment configuraiton
+	        var volume;
+	        var mute;
+	        var input;
+
+            var inputDefs = {
+                "MM": "2",
+                "CD": "3",
+                "CD2": "4",
+                "AUX": "6",
+                "USB": "8",
+                "TUNER": "9"
+            }
+
+            var usbAudioControls = {
+                "Play": "0",
+                "Back": "3",
+                "Forward": "2"
+            }
+
+	        // Display
+            var backgroundCtx;
+			var display = document.createElement("canvas");
+			var displayCtx = display.getContext("2d");							
+
+            spark.on('login', function(err, body) {
+
+                spark.getDevice(particleConfig.deviceID, function(err, device) {
+                    intoBlueDevice = device;
+
+                    // sync-up with unit
+                    query();
+                });
+
+            });
+
+        	function updateDisplay(textString, line) {
+        		if ((textString.length == 20) && (line < 2)) {
+        			// update display
+    				display.width = 280;
+    				display.height = 32;
+    				   			
+     				displayCtx.fillStyle = "#0C0A0C";
+    				displayCtx.fillRect(0,0,280,32);
+
+    				displayCtx.font = "22px monospace";
+    				displayCtx.fillStyle = "#00ACF8";	  
+    				
+              		displayCtx.fillText(textString, 0, 30); 
+     				backgroundCtx.drawImage(display, 465, 205 + (32 * line));				         		   			
+        		} else {
+        			console.log("Incorrect length for text: " + textString);
+        		}
+        	}
+
+            // Maybe place send command in function and pass the string. If send fails then 
+            // display can change to power off. Need a method to query and discover power off
+            function volumeUp() {
+                intoBlueDevice.callFunction('sendCommand', '(VUP Z1)', function(err, data) {
+                    if (err) {
+                        console.log('An error occurred:', err);
+                    } else {
+                        console.log('Function called successfully:', data);
+                    }
+                });   
+            }
+
+            function volumeDown() {
+                intoBlueDevice.callFunction('sendCommand', '(VDN Z1)', function(err, data) {
+                    if (err) {
+                        console.log('An error occurred:', err);
+                    } else {
+                        console.log('Function called successfully:', data);
+                    }
+                });   
+            }
+
+            function muteVolume() {
+                var commandString = "(MUT Z1 1)";
+                if (mute != 0) {
+                    commandString = "(MUT Z1 0)"; 
+                }
+                intoBlueDevice.callFunction('sendCommand', commandString, function(err, data) {
+                    if (err) {
+                        console.log('An error occurred:', err);
+                    } else {
+                        console.log('Function called successfully:', data);
+                    }
+                });   
+            }   
+
+            function USBAudio(usbAudioControl) {
+                var commandString = "(TPC Z1 " + usbAudioControl + ")";
+                intoBlueDevice.callFunction('sendCommand', commandString, function(err, data) {
+                    if (err) {
+                        console.log('An error occurred:', err);
+                    } else {
+                        console.log('Function called successfully:', data);
+                    }
+                });   
+            }                    
+
+            function query() {
+                intoBlueDevice.callFunction('sendCommand', '(QRY)', function(err, data) {
+                    if (err) {
+                        console.log('An error occurred:', err);
+                    } else {
+                        console.log('Function called successfully:', data);
+                    }
+                });   
+            }
+
+    		function init() {
+                spark.login(particleConfig); 
+    			backgroundCtx = document.getElementById('canvas').getContext('2d');
+    			var img = new Image();
+    			img.src = "MA5200.png";        
+    			img.onload = function() {
+    				backgroundCtx.drawImage(this,0,0,1195,353);	
+    			}
+    		}
+
+            eventSource.addEventListener('open', function(e) {
+                console.log("Opened!"); },false);
+
+            eventSource.addEventListener('error', function(e) {
+                console.log("Errored!"); },false);
+
+            eventSource.addEventListener('mcintosh-response', function(e) {
+                var parsedData = JSON.parse(e.data);
+                // need to deal with the first element being an empty string when splitting on the (
+                var commandStrings = parsedData.data.split('(');
+                commandStrings.forEach(function (commandString) {
+                    var commandRegExp = /^(\w\w\w)\s?(\w*)\s?(\d*)\s?(\d*)/;
+                    var parsedCommand = commandRegExp.exec(commandString);
+
+                    if (parsedCommand != null) {
+                        var command = parsedCommand[1];
+                        var zone = parsedCommand[2];
+                        var value1 = parsedCommand[3];
+                        var value2 = parsedCommand[4];
+
+                        switch (command) {
+                            case "VST":
+                                volume = value1
+              					updateDisplay("         " + String("00" + volume).slice(-2) + "%        ", 1);                  
+                                break;
+                             case "MUT":
+                                mute = value1;
+                                if (mute == 1) {
+              						updateDisplay("        MUTE        ", 1);      
+                                } else {
+              						updateDisplay("         " + String("00" + volume).slice(-2) + "%        ", 1);    
+              					}           
+                                break;
+                            case "INP":
+                                input = value1;
+                                switch (input) {
+                                    case inputDefs.MM:
+                                        updateDisplay("   SOURCE: PHONE MM ", 0);
+                                        break;
+                                    case inputDefs.CD:
+                                        updateDisplay("   SOURCE: CD       ", 0);
+                                        break;
+                                    case inputDefs.CD2:
+                                        updateDisplay("   SOURCE: CD2      ", 0);
+                                        break;
+                                    case inputDefs.AUX:
+                                        updateDisplay("   SOURCE: AUX      ", 0);   
+                                        break;                             
+                                    case inputDefs.USB:
+                                        updateDisplay("   SOURCE: USB-D/A  ", 0);
+                                        break;
+                                    case inputDefs.TUNER:
+                                        updateDisplay("   SOURCE: TUNER    ", 0);
+                                        break;
+                                }
+                                break;                      
+                            case "POF":
+                                updateDisplay("  UNIT POWERED OFF  ", 0);
+                                updateDisplay("                    ", 1);
+                                break;
+                        }                             
+                    } else {
+                        console.log("Unrecognized command format " + commandString);
+                    }
+
+                });       
+            }, false);
+		</script>
+	</head>
+	<body onload="init()">
+
+		<canvas id="canvas" width="1195" height="353">
+			Canvas is not supported.
+		</canvas>
+        <br><br>
+    	<button onclick="volumeUp()">Volume Up</button>
+    	<button onclick="volumeDown()">Volume Down</button>
+        <button onclick="muteVolume()">Mute</button>  
+        <p>
+        <button onclick="USBAudio(usbAudioControls.Back)">Back</button>
+        <button onclick="USBAudio(usbAudioControls.Play)">Play/Pause</button>
+        <button onclick="USBAudio(usbAudioControls.Forward)">Forward</button>
+	</body>
+</html>
