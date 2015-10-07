@@ -5,7 +5,7 @@ IntoBlue is a project designed to enable cloud control of [McIntosh Labs](http:/
 This document details how to connect to and control McIntosh equipment. It is a summary of several generally available sources along with a few details learned while developing IntoBlue.
 
 ##IntoBlue.ino
-Wiring code for use on Particle.io Photon device. More details about [Photon]( https://docs.particle.io/datasheets/photon-datasheet) can be found at [particle.io](www.particle.io).
+Wiring code for use on Particle.io Photon device. More details about [Photon]( https://docs.particle.io/datasheets/photon-datasheet) can be found at [particle.io](https://www.particle.io).
 
 ##IntoBlue.html
 HTML and JS used to demonstrate cloud control 
