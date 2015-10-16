@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://youtu.be/zQ3S4JUxpOc">
+    <img height="735" width="600" src="https://raw.githubusercontent.com/IntoBlue/master/IntoBlueCircuit.JPG">
+  </a>
+</p>
+
 # IntoBlue
 IntoBlue is a project designed to enable cloud control of [McIntosh Labs](http://www.mcintoshlabs.com) audio equipment over wireless connections. Control of an MA5200 from two web browsers can be seen in this [video]( https://youtu.be/zQ3S4JUxpOc). All of the source material required to build and/or extend IntoBlue can be found in this repository. The files are briefly described below.
 
