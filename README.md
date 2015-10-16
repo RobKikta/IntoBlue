@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://youtu.be/zQ3S4JUxpOc">
-    <img height="735" width="600" src="https://raw.githubusercontent.com/IntoBlue/master/IntoBlueCircuit.JPG">
+    <img height="515" width="420" src="https://raw.githubusercontent.com/RKikta/IntoBlue/master/IntoBlueCircuit.JPG">
   </a>
 </p>
 
